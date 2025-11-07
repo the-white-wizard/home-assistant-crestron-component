@@ -7,12 +7,7 @@ from homeassistant.util import slugify
 
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
-    SUPPORT_SELECT_SOURCE,
-    SUPPORT_TURN_OFF,
-    SUPPORT_TURN_ON,
-    SUPPORT_VOLUME_MUTE,
-    SUPPORT_VOLUME_SET,
-    SUPPORT_VOLUME_STEP,
+    MediaPlayerEntityFeature,
 )
 from homeassistant.const import STATE_ON, STATE_OFF, CONF_NAME
 from .const import (
@@ -59,12 +54,15 @@ class CrestronRoom(MediaPlayerEntity):
         self._name = config.get(CONF_NAME)
         self._device_class = "speaker"
         self._supported_features = (
-            SUPPORT_SELECT_SOURCE
-            | SUPPORT_VOLUME_MUTE
-            | SUPPORT_VOLUME_SET
-            | SUPPORT_TURN_OFF
-            | SUPPORT_TURN_ON
-            | SUPPORT_VOLUME_STEP
+            MediaPlayerEntityFeature.PAUSE
+            | MediaPlayerEntityFeature.PLAY
+            | MediaPlayerEntityFeature.STOP
+            | MediaPlayerEntityFeature.SELECT_SOURCE
+            | MediaPlayerEntityFeature.VOLUME_MUTE
+            | MediaPlayerEntityFeature.VOLUME_SET
+            | MediaPlayerEntityFeature.TURN_OFF
+            | MediaPlayerEntityFeature.TURN_ON
+            | MediaPlayerEntityFeature.VOLUME_STEP
         )
         self._mute_join = config.get(CONF_MUTE_JOIN)
         self._volume_up_join = config.get(CONF_VOLUME_UP_JOIN)
