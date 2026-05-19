@@ -87,6 +87,7 @@ PLATFORMS = [
     "climate",
     "cover",
     "media_player",
+    "select",
 ]
 
 
