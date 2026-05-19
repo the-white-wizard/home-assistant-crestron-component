@@ -1,10 +1,11 @@
 # Note
 
-~~Some entities are now broken since 2025.01. I will fix them soon.~~
+Changes from georgesak@ 0.3:
 
-~~Until then, only fix is to downgrade.~~
-
-2025.1.1 reverts those changes so things are back to working, but might break again in 2025.3. I'm still planning on landing fixes ssoon.
+  - Removed everything from climate module apart from heating, to streamline for TSTATs that only heat
+  - Modified media_player to remove transport controls, and to have discrete pulsed on/off joins, instead of bundling power in with input selection
+  - Added "select" module, to act as a speaker output selector
+  - Modified switch to use discrete pulsed on/off joins
 
 # Credit
 
