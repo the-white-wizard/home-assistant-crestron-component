@@ -1,5 +1,6 @@
 """Platform for Crestron Media Player integration."""
 
+import asyncio
 import voluptuous as vol
 import logging
 import homeassistant.helpers.config_validation as cv
@@ -8,11 +9,15 @@ from homeassistant.util import slugify
 from homeassistant.components.media_player import (
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
+    MediaPlayerDeviceClass,
 )
 from homeassistant.const import STATE_ON, STATE_OFF, CONF_NAME
 from .const import (
     HUB,
     DOMAIN,
+    CONF_POWER_ON_JOIN,
+    CONF_POWER_OFF_JOIN,
+    CONF_POWER_STATE_JOIN,
     CONF_MUTE_JOIN,
     CONF_VOLUME_UP_JOIN,
     CONF_VOLUME_DOWN_JOIN,
@@ -32,6 +37,9 @@ SOURCES_SCHEMA = vol.Schema (
 PLATFORM_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_POWER_ON_JOIN): cv.positive_int,
+        vol.Required(CONF_POWER_OFF_JOIN): cv.positive_int,
+        vol.Required(CONF_POWER_STATE_JOIN): cv.positive_int,
         vol.Required(CONF_MUTE_JOIN): cv.positive_int,           
         vol.Required(CONF_VOLUME_UP_JOIN): cv.positive_int,           
         vol.Required(CONF_VOLUME_DOWN_JOIN): cv.positive_int,           
@@ -52,18 +60,21 @@ class CrestronRoom(MediaPlayerEntity):
     def __init__(self, hub, config):
         self._hub = hub
         self._name = config.get(CONF_NAME)
-        self._device_class = "speaker"
+        self._device_class = MediaPlayerDeviceClass.RECEIVER
         self._supported_features = (
-            MediaPlayerEntityFeature.PAUSE
-            | MediaPlayerEntityFeature.PLAY
-            | MediaPlayerEntityFeature.STOP
-            | MediaPlayerEntityFeature.SELECT_SOURCE
+            MediaPlayerEntityFeature.SELECT_SOURCE
+#            | MediaPlayerEntityFeature.PLAY
+#            | MediaPlayerEntityFeature.STOP
+#            | MediaPlayerEntityFeature.PAUSE
             | MediaPlayerEntityFeature.VOLUME_MUTE
             | MediaPlayerEntityFeature.VOLUME_SET
             | MediaPlayerEntityFeature.TURN_OFF
             | MediaPlayerEntityFeature.TURN_ON
             | MediaPlayerEntityFeature.VOLUME_STEP
         )
+        self._power_on_join = config.get(CONF_POWER_ON_JOIN)
+        self._power_off_join = config.get(CONF_POWER_OFF_JOIN)
+        self._power_state_join = config.get(CONF_POWER_STATE_JOIN)
         self._mute_join = config.get(CONF_MUTE_JOIN)
         self._volume_up_join = config.get(CONF_VOLUME_UP_JOIN)
         self._volume_down_join = config.get(CONF_VOLUME_DOWN_JOIN)
@@ -113,12 +124,16 @@ class CrestronRoom(MediaPlayerEntity):
         else:
             return self._sources[source_num]
 
+#    @property
+#    def state(self):
+#        if self._hub.get_analog(self._source_number_join) == 0:
+#            return STATE_OFF
+#        else:
+#            return STATE_ON
+
     @property
     def state(self):
-        if self._hub.get_analog(self._source_number_join) == 0:
-            return STATE_OFF
-        else:
-            return STATE_ON
+        return STATE_ON if self._hub.get_digital(self._power_state_join) else STATE_OFF
 
     @property
     def is_volume_muted(self):
@@ -152,8 +167,22 @@ class CrestronRoom(MediaPlayerEntity):
             if name == source:
                 self._hub.set_analog(self._source_number_join, input_num)
 
+    async def _pulse_join(self, join):
+        self._hub.set_digital(join, False)
+        await asyncio.sleep(0.05)
+        self._hub.set_digital(join, True)
+        await asyncio.sleep(0.2)
+        self._hub.set_digital(join, False)
+
+
+#    async def async_turn_off(self):
+#        self._hub.set_analog(self._source_number_join, 0)
+
     async def async_turn_off(self):
-        self._hub.set_analog(self._source_number_join, 0)
+        await self._pulse_join(self._power_off_join)
+
+#    async def async_turn_on(self):
+#        self._hub.set_analog(self._source_number_join, 1)
 
     async def async_turn_on(self):
-        self._hub.set_analog(self._source_number_join, 1)
+        await self._pulse_join(self._power_on_join)
