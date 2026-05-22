@@ -88,6 +88,7 @@ PLATFORMS = [
     "cover",
     "media_player",
     "select",
+    "fan",
 ]
 
 
